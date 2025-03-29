@@ -10,6 +10,7 @@ import {
   type InsertRecentSearch
 } from "@shared/schema";
 import { medicineData } from "./data/medicines";
+import { PostgresStorage } from "./db-storage";
 
 export interface IStorage {
   // Medicine operations
@@ -155,4 +156,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use PostgreSQL storage for persistence
+export const storage = new PostgresStorage();
