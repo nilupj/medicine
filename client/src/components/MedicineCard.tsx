@@ -13,7 +13,8 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
   };
 
   // Format date for display
-  const formatDate = (dateString: Date) => {
+  const formatDate = (dateString: Date | null) => {
+    if (!dateString) return 'Unknown';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
@@ -93,6 +94,7 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
           )}
           
           <div className="text-xs text-slate-500 mt-2">
+            {medicine.composition && <p className="mb-1"><span className="font-medium">Active ingredients:</span> {medicine.composition}</p>}
             {medicine.forms && <p>Available forms: {medicine.forms}</p>}
             {medicine.dosage && <p>Typical dosage: {medicine.dosage}</p>}
           </div>

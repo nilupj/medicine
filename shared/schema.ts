@@ -9,6 +9,7 @@ export const medicines = pgTable("medicines", {
   aliases: text("aliases"),
   description: text("description").notNull(),
   category: text("category").notNull(),
+  composition: text("composition"),
   uses: text("uses"),
   sideEffects: text("side_effects"),
   dosage: text("dosage"),

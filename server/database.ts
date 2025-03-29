@@ -64,6 +64,7 @@ export async function initDatabase() {
             aliases TEXT,
             description TEXT NOT NULL,
             category TEXT NOT NULL,
+            composition TEXT,
             uses TEXT,
             side_effects TEXT,
             dosage TEXT,
