@@ -33,6 +33,18 @@ export const recentSearches = pgTable("recent_searches", {
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
+// Drug interactions table
+export const drugInteractions = pgTable("drug_interactions", {
+  id: serial("id").primaryKey(),
+  medicine1Id: integer("medicine1_id").notNull().references(() => medicines.id),
+  medicine2Id: integer("medicine2_id").notNull().references(() => medicines.id),
+  severity: text("severity").notNull(),
+  description: text("description").notNull(),
+  effects: text("effects").notNull(),
+  management: text("management"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertMedicineSchema = createInsertSchema(medicines).omit({
   id: true,
@@ -48,6 +60,15 @@ export const insertRecentSearchSchema = createInsertSchema(recentSearches).omit(
   timestamp: true,
 });
 
+export const insertDrugInteractionSchema = createInsertSchema(drugInteractions)
+  .omit({
+    id: true,
+    createdAt: true,
+  })
+  .extend({
+    severity: z.enum(['Minor', 'Moderate', 'Major']),
+  });
+
 // Types for our application
 export type Medicine = typeof medicines.$inferSelect;
 export type InsertMedicine = z.infer<typeof insertMedicineSchema>;
@@ -57,3 +78,6 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export type RecentSearch = typeof recentSearches.$inferSelect;
 export type InsertRecentSearch = z.infer<typeof insertRecentSearchSchema>;
+
+export type DrugInteraction = typeof drugInteractions.$inferSelect;
+export type InsertDrugInteraction = z.infer<typeof insertDrugInteractionSchema>;

@@ -1,7 +1,10 @@
 import { useState } from "react";
 import MedicineCard from "./MedicineCard";
+import DrugInteractionChecker from "./DrugInteractionChecker";
 import { Medicine } from "@shared/schema";
 import { FilterOptions } from "./FilterBar";
+import { Button } from "@/components/ui/button";
+import { AlertCircle } from "lucide-react";
 
 interface ResultsSectionProps {
   searchQuery: string;
@@ -19,7 +22,42 @@ export default function ResultsSection({
   filters 
 }: ResultsSectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMedicines, setSelectedMedicines] = useState<Medicine[]>([]);
+  const [showInteractionChecker, setShowInteractionChecker] = useState(false);
   const resultsPerPage = 6;
+  
+  // Handle medicine selection for interaction checking
+  const handleMedicineSelect = (medicine: Medicine) => {
+    setSelectedMedicines(prev => {
+      const isAlreadySelected = prev.some(m => m.id === medicine.id);
+      
+      if (isAlreadySelected) {
+        // Remove from selection
+        return prev.filter(m => m.id !== medicine.id);
+      } else {
+        // Add to selection (max 5 medicines)
+        if (prev.length < 5) {
+          return [...prev, medicine];
+        }
+        return prev;
+      }
+    });
+  };
+  
+  // Check if a medicine is selected
+  const isMedicineSelected = (medicine: Medicine) => {
+    return selectedMedicines.some(m => m.id === medicine.id);
+  };
+  
+  // Clear all selected medicines
+  const clearSelectedMedicines = () => {
+    setSelectedMedicines([]);
+  };
+  
+  // Toggle interaction checker visibility
+  const toggleInteractionChecker = () => {
+    setShowInteractionChecker(prev => !prev);
+  };
   
   // Apply filters to the search results
   const filterResults = (results: Medicine[]) => {
@@ -130,14 +168,89 @@ export default function ResultsSection({
   // Results container content
   const renderResultsContainer = () => (
     <div>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
         <h3 className="text-lg font-medium text-slate-800">Results for "{searchQuery}"</h3>
-        <span className="text-sm text-slate-500">{filteredResults.length} medications found</span>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-slate-500">{filteredResults.length} medications found</span>
+          
+          {selectedMedicines.length > 0 && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={toggleInteractionChecker}
+              className="ml-2"
+            >
+              Check Interactions ({selectedMedicines.length})
+            </Button>
+          )}
+        </div>
       </div>
+      
+      {showInteractionChecker && selectedMedicines.length > 0 && (
+        <div className="mb-6">
+          <DrugInteractionChecker 
+            selectedMedicines={selectedMedicines} 
+            onClose={() => {
+              setShowInteractionChecker(false);
+            }} 
+          />
+        </div>
+      )}
+      
+      {selectedMedicines.length > 0 && !showInteractionChecker && (
+        <div className="bg-blue-50 p-4 rounded-lg mb-4 flex items-start">
+          <AlertCircle className="text-blue-500 mt-0.5 mr-2 h-5 w-5 flex-shrink-0" />
+          <div>
+            <h4 className="text-sm font-medium text-blue-800">
+              {selectedMedicines.length === 1 
+                ? "1 medicine selected" 
+                : `${selectedMedicines.length} medicines selected`}
+            </h4>
+            <p className="text-xs text-blue-700 mt-1">
+              {selectedMedicines.length === 1 
+                ? "Select at least one more medicine to check for interactions." 
+                : "Click 'Check Interactions' to see potential drug interactions."}
+            </p>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {selectedMedicines.map(med => (
+                <span 
+                  key={med.id} 
+                  className="bg-white text-blue-800 text-xs rounded px-2 py-1 border border-blue-200 flex items-center"
+                >
+                  {med.name}
+                  <button 
+                    className="ml-1 text-blue-500 hover:text-blue-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMedicineSelect(med);
+                    }}
+                  >
+                    <span className="material-icons text-xs">close</span>
+                  </button>
+                </span>
+              ))}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs h-6 px-2 text-blue-700 hover:text-blue-900"
+                onClick={clearSelectedMedicines}
+              >
+                Clear All
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {paginatedResults.map((medicine) => (
-          <MedicineCard key={medicine.id} medicine={medicine} />
+          <MedicineCard 
+            key={medicine.id} 
+            medicine={medicine}
+            selectable={true}
+            isSelected={isMedicineSelected(medicine)}
+            onSelect={handleMedicineSelect}
+          />
         ))}
       </div>
 

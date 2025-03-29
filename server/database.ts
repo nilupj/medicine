@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { medicines, categories, recentSearches } from '@shared/schema';
+import { medicines, categories, recentSearches, drugInteractions } from '@shared/schema';
 import dotenv from 'dotenv';
 
 // Load environment variables
@@ -18,7 +18,7 @@ if (!databaseUrl) {
 const sql = neon(databaseUrl);
 
 // Create drizzle client
-export const db = drizzle(sql, { schema: { medicines, categories, recentSearches } });
+export const db = drizzle(sql, { schema: { medicines, categories, recentSearches, drugInteractions } });
 
 // Initialize the database
 export async function initDatabase() {
@@ -80,6 +80,21 @@ export async function initDatabase() {
             id SERIAL PRIMARY KEY,
             search_term TEXT NOT NULL,
             timestamp TIMESTAMP WITH TIME ZONE
+          )
+        `;
+        
+        await sql`
+          CREATE TABLE IF NOT EXISTS drug_interactions (
+            id SERIAL PRIMARY KEY,
+            medicine1_id INTEGER NOT NULL REFERENCES medicines(id),
+            medicine2_id INTEGER NOT NULL REFERENCES medicines(id),
+            severity TEXT NOT NULL CHECK (severity IN ('Minor', 'Moderate', 'Major')),
+            description TEXT NOT NULL,
+            effects TEXT NOT NULL,
+            management TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            CONSTRAINT medicine_order CHECK (medicine1_id < medicine2_id),
+            CONSTRAINT unique_medicine_pair UNIQUE (medicine1_id, medicine2_id)
           )
         `;
       }

@@ -1,15 +1,33 @@
 import { useState } from "react";
 import { Medicine } from "@shared/schema";
+import { Check } from "lucide-react";
 
 interface MedicineCardProps {
   medicine: Medicine;
+  onSelect?: (medicine: Medicine) => void;
+  isSelected?: boolean;
+  selectable?: boolean;
 }
 
-export default function MedicineCard({ medicine }: MedicineCardProps) {
+export default function MedicineCard({ 
+  medicine, 
+  onSelect, 
+  isSelected = false, 
+  selectable = false 
+}: MedicineCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const toggleDetails = () => {
+  const toggleDetails = (e: React.MouseEvent) => {
+    if (selectable) {
+      e.stopPropagation();
+    }
     setIsExpanded(!isExpanded);
+  };
+  
+  const handleSelect = () => {
+    if (selectable && onSelect) {
+      onSelect(medicine);
+    }
   };
 
   // Format date for display
@@ -30,10 +48,18 @@ export default function MedicineCard({ medicine }: MedicineCardProps) {
   const sideEffectsList = medicine.sideEffects?.split('\n') || [];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-slate-200 hover:shadow-md transition">
+    <div className={`bg-white rounded-lg shadow-sm overflow-hidden border ${isSelected ? 'border-primary border-2' : 'border-slate-200'} hover:shadow-md transition ${selectable ? 'cursor-pointer' : ''}`}
+         onClick={selectable ? handleSelect : undefined}>
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h4 className="font-semibold text-lg text-slate-800">{medicine.name}</h4>
+          <div className="flex items-center">
+            {selectable && (
+              <div className={`w-5 h-5 flex items-center justify-center rounded mr-2 ${isSelected ? 'bg-primary text-white' : 'border border-slate-300'}`}>
+                {isSelected && <Check className="h-3 w-3" />}
+              </div>
+            )}
+            <h4 className="font-semibold text-lg text-slate-800">{medicine.name}</h4>
+          </div>
           <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
             {medicine.otcRx}
           </span>

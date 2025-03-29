@@ -1,17 +1,20 @@
 import { db } from './database';
-import { eq, like, desc, sql } from 'drizzle-orm';
+import { eq, like, desc, sql, and, or, inArray } from 'drizzle-orm';
 import { 
   medicines, 
   categories, 
-  recentSearches, 
+  recentSearches,
+  drugInteractions,
   type Medicine, 
   type InsertMedicine,
   type Category,
   type InsertCategory,
   type RecentSearch,
-  type InsertRecentSearch
+  type InsertRecentSearch,
+  type DrugInteraction,
+  type InsertDrugInteraction
 } from "@shared/schema";
-import { IStorage } from './storage';
+import { IStorage, DrugInteractionDetail } from './storage';
 
 export class PostgresStorage implements IStorage {
   // Medicine methods
@@ -85,5 +88,128 @@ export class PostgresStorage implements IStorage {
       .returning();
     
     return result[0];
+  }
+
+  // Drug interaction methods
+  async getInteractions(medicineId: number): Promise<DrugInteractionDetail[]> {
+    // Get all interactions where this medicine is involved (either medicine1 or medicine2)
+    const interactions = await db.select()
+      .from(drugInteractions)
+      .where(
+        or(
+          eq(drugInteractions.medicine1Id, medicineId),
+          eq(drugInteractions.medicine2Id, medicineId)
+        )
+      );
+    
+    // For each interaction, fetch the details of both medicines
+    const detailedInteractions: DrugInteractionDetail[] = [];
+    
+    for (const interaction of interactions) {
+      const medicine1 = await this.getMedicineById(interaction.medicine1Id);
+      const medicine2 = await this.getMedicineById(interaction.medicine2Id);
+      
+      if (medicine1 && medicine2) {
+        detailedInteractions.push({
+          ...interaction,
+          medicine1,
+          medicine2
+        });
+      }
+    }
+    
+    return detailedInteractions;
+  }
+
+  async checkInteractions(medicineIds: number[]): Promise<DrugInteractionDetail[]> {
+    if (medicineIds.length < 2) {
+      return [];
+    }
+    
+    // We need to find all interactions where both medicines are in the provided list
+    // First, get all interactions involving any medicine in the list
+    const interactions = await db.select()
+      .from(drugInteractions)
+      .where(
+        or(
+          inArray(drugInteractions.medicine1Id, medicineIds),
+          inArray(drugInteractions.medicine2Id, medicineIds)
+        )
+      );
+    
+    // Filter to only include interactions where both medicines are in the list
+    const relevantInteractions = interactions.filter(interaction => {
+      return medicineIds.includes(interaction.medicine1Id) && 
+             medicineIds.includes(interaction.medicine2Id);
+    });
+    
+    // Add medicine details
+    const detailedInteractions: DrugInteractionDetail[] = [];
+    
+    for (const interaction of relevantInteractions) {
+      const medicine1 = await this.getMedicineById(interaction.medicine1Id);
+      const medicine2 = await this.getMedicineById(interaction.medicine2Id);
+      
+      if (medicine1 && medicine2) {
+        detailedInteractions.push({
+          ...interaction,
+          medicine1,
+          medicine2
+        });
+      }
+    }
+    
+    return detailedInteractions;
+  }
+
+  async addInteraction(interaction: InsertDrugInteraction): Promise<DrugInteraction> {
+    // Always store with the lower medicine ID as medicine1Id to enforce ordering
+    let medicine1Id = interaction.medicine1Id;
+    let medicine2Id = interaction.medicine2Id;
+    
+    if (medicine1Id > medicine2Id) {
+      [medicine1Id, medicine2Id] = [medicine2Id, medicine1Id];
+    }
+    
+    const result = await db.insert(drugInteractions)
+      .values({
+        ...interaction,
+        medicine1Id,
+        medicine2Id,
+        createdAt: new Date()
+      })
+      .returning();
+    
+    return result[0];
+  }
+
+  async updateInteraction(id: number, interaction: Partial<InsertDrugInteraction>): Promise<DrugInteraction | undefined> {
+    // If both medicine IDs are being updated, ensure proper ordering
+    if (interaction.medicine1Id !== undefined && interaction.medicine2Id !== undefined) {
+      let medicine1Id = interaction.medicine1Id;
+      let medicine2Id = interaction.medicine2Id;
+      
+      if (medicine1Id > medicine2Id) {
+        [medicine1Id, medicine2Id] = [medicine2Id, medicine1Id];
+      }
+      
+      interaction.medicine1Id = medicine1Id;
+      interaction.medicine2Id = medicine2Id;
+    }
+    
+    const result = await db.update(drugInteractions)
+      .set(interaction)
+      .where(eq(drugInteractions.id, id))
+      .returning();
+    
+    return result[0];
+  }
+
+  async deleteInteraction(id: number): Promise<boolean> {
+    const result = await db.delete(drugInteractions)
+      .where(eq(drugInteractions.id, id))
+      .returning();
+    
+    return result.length > 0;
   }
 }

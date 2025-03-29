@@ -1,16 +1,25 @@
 import { 
   medicines, 
   categories, 
-  recentSearches, 
+  recentSearches,
+  drugInteractions,
   type Medicine, 
   type InsertMedicine,
   type Category,
   type InsertCategory,
   type RecentSearch,
-  type InsertRecentSearch
+  type InsertRecentSearch,
+  type DrugInteraction,
+  type InsertDrugInteraction
 } from "@shared/schema";
 import { medicineData } from "./data/medicines";
 import { PostgresStorage } from "./db-storage";
+
+// Structure for interaction results with medicine details
+export interface DrugInteractionDetail extends DrugInteraction {
+  medicine1: Medicine;
+  medicine2: Medicine;
+}
 
 export interface IStorage {
   // Medicine operations
@@ -28,6 +37,13 @@ export interface IStorage {
   // Recent search operations
   getRecentSearches(limit?: number): Promise<RecentSearch[]>;
   addRecentSearch(search: InsertRecentSearch): Promise<RecentSearch>;
+  
+  // Drug interaction operations
+  getInteractions(medicineId: number): Promise<DrugInteractionDetail[]>;
+  checkInteractions(medicineIds: number[]): Promise<DrugInteractionDetail[]>;
+  addInteraction(interaction: InsertDrugInteraction): Promise<DrugInteraction>;
+  updateInteraction(id: number, interaction: Partial<InsertDrugInteraction>): Promise<DrugInteraction | undefined>;
+  deleteInteraction(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -58,24 +74,24 @@ export class MemStorage implements IStorage {
     
     ['Pain Relief', 'Anti-inflammatory', 'Fever Reducer', 'Antibiotics', 
      'Antivirals', 'Cardiovascular', 'Diabetes', 'Respiratory', 
-     'Gastrointestinal', 'Mental Health', 'Allergies'].forEach(name => {
-      const category = this.createCategory({ name, description: `Medications for ${name.toLowerCase()}` });
+     'Gastrointestinal', 'Mental Health', 'Allergies'].forEach(async (name) => {
+      const category = await this.createCategory({ name, description: `Medications for ${name.toLowerCase()}` });
       categoryMap[name] = category.id;
     });
     
     // Seed medicine data
-    medicineData.forEach(med => {
-      this.createMedicine({
+    medicineData.forEach(async (med) => {
+      await this.createMedicine({
         name: med.name,
-        aliases: med.aliases,
+        aliases: med.aliases || null,
         description: med.description,
         category: med.category,
-        uses: med.uses,
-        sideEffects: med.sideEffects,
-        dosage: med.dosage,
-        forms: med.forms,
-        warnings: med.warnings,
-        otcRx: med.otcRx
+        uses: med.uses || null,
+        sideEffects: med.sideEffects || null,
+        dosage: med.dosage || null,
+        forms: med.forms || null,
+        warnings: med.warnings || null,
+        otcRx: med.otcRx || null
       });
     });
   }
@@ -111,9 +127,21 @@ export class MemStorage implements IStorage {
   async createMedicine(insertMedicine: InsertMedicine): Promise<Medicine> {
     const id = this.medicineCurrentId++;
     const now = new Date();
+    
+    // Ensure all nullable fields have proper null values instead of undefined
     const medicine: Medicine = { 
-      ...insertMedicine, 
       id,
+      name: insertMedicine.name, 
+      description: insertMedicine.description,
+      category: insertMedicine.category,
+      aliases: insertMedicine.aliases ?? null,
+      composition: insertMedicine.composition ?? null,
+      uses: insertMedicine.uses ?? null,
+      sideEffects: insertMedicine.sideEffects ?? null,
+      dosage: insertMedicine.dosage ?? null,
+      forms: insertMedicine.forms ?? null,
+      warnings: insertMedicine.warnings ?? null,
+      otcRx: insertMedicine.otcRx ?? null,
       lastUpdated: now
     };
     this.medicines.set(id, medicine);
@@ -131,7 +159,11 @@ export class MemStorage implements IStorage {
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
     const id = this.categoryCurrentId++;
-    const category: Category = { ...insertCategory, id };
+    const category: Category = { 
+      id,
+      name: insertCategory.name,
+      description: insertCategory.description ?? null
+    };
     this.categories.set(id, category);
     return category;
   }
@@ -139,7 +171,12 @@ export class MemStorage implements IStorage {
   // Recent searches methods
   async getRecentSearches(limit: number = 5): Promise<RecentSearch[]> {
     return Array.from(this.searches.values())
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .sort((a, b) => {
+        // Handle possibly null timestamps
+        const timeA = a.timestamp?.getTime() ?? 0;
+        const timeB = b.timestamp?.getTime() ?? 0;
+        return timeB - timeA;
+      })
       .slice(0, limit);
   }
 
@@ -153,6 +190,29 @@ export class MemStorage implements IStorage {
     };
     this.searches.set(id, search);
     return search;
+  }
+
+  // Drug interaction methods (stub implementation for MemStorage)
+  async getInteractions(medicineId: number): Promise<DrugInteractionDetail[]> {
+    // Not implemented in in-memory storage
+    return [];
+  }
+
+  async checkInteractions(medicineIds: number[]): Promise<DrugInteractionDetail[]> {
+    // Not implemented in in-memory storage
+    return [];
+  }
+
+  async addInteraction(interaction: InsertDrugInteraction): Promise<DrugInteraction> {
+    throw new Error("Drug interactions not implemented in in-memory storage");
+  }
+
+  async updateInteraction(id: number, interaction: Partial<InsertDrugInteraction>): Promise<DrugInteraction | undefined> {
+    throw new Error("Drug interactions not implemented in in-memory storage");
+  }
+
+  async deleteInteraction(id: number): Promise<boolean> {
+    throw new Error("Drug interactions not implemented in in-memory storage");
   }
 }
 
