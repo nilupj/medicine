@@ -4,6 +4,8 @@ import { storage } from "./storage";
 import { insertRecentSearchSchema, insertDrugInteractionSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
+import { importDrugsFromList } from "./importDrugs";
+import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all medicines (paginated)
@@ -215,6 +217,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting interaction:", error);
       return res.status(500).json({ message: "Failed to delete drug interaction" });
+    }
+  });
+  
+  // Import drugs from txt file
+  app.post("/api/admin/import-drugs", async (req, res) => {
+    try {
+      // This route should be protected in production
+      const dataFilePath = path.join(__dirname, "data", "druglist.txt");
+      console.log(`Starting drug import from ${dataFilePath}`);
+      
+      // Run the import asynchronously so we don't block the response
+      importDrugsFromList(dataFilePath)
+        .then(() => {
+          console.log("Drug import completed successfully");
+        })
+        .catch((error) => {
+          console.error("Error in drug import process:", error);
+        });
+      
+      // Return immediately to client with a processing message
+      return res.status(202).json({ 
+        message: "Drug import process started. Check server logs for details."
+      });
+    } catch (error) {
+      console.error("Error initiating drug import:", error);
+      return res.status(500).json({ message: "Failed to start drug import process" });
     }
   });
 

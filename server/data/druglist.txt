@@ -1,0 +1,43 @@
+DRUG CODE|DRUG NAME|FORMULATION|STRENGTH|COUNT NUMBER|L1 RATE|L1 LAB
+PARA001|Paracetamol|Tablet|500mg|100|12.50|ACME
+PARA002|Paracetamol|Syrup|125mg/5ml|60|18.75|ACME
+PARA003|Paracetamol|Injection|1g/100ml|10|32.50|ACME
+IBUP001|Ibuprofen|Tablet|200mg|30|15.00|PHARMA
+IBUP002|Ibuprofen|Tablet|400mg|30|22.50|PHARMA
+IBUP003|Ibuprofen|Suspension|100mg/5ml|100|27.80|PHARMA
+AMOX001|Amoxicillin|Capsule|250mg|20|18.20|ANTIBIO
+AMOX002|Amoxicillin|Capsule|500mg|20|24.50|ANTIBIO
+AMOX003|Amoxicillin|Powder for Suspension|125mg/5ml|100|32.00|ANTIBIO
+AMOX004|Amoxicillin|Powder for Suspension|250mg/5ml|100|42.80|ANTIBIO
+CIPR001|Ciprofloxacin|Tablet|250mg|10|35.40|ANTIBIO
+CIPR002|Ciprofloxacin|Tablet|500mg|10|48.75|ANTIBIO
+CIPR003|Ciprofloxacin|Injection|200mg/100ml|1|62.20|ANTIBIO
+METR001|Metronidazole|Tablet|200mg|20|14.50|ANTIBIO
+METR002|Metronidazole|Tablet|400mg|20|22.30|ANTIBIO
+METR003|Metronidazole|Injection|500mg/100ml|1|38.90|ANTIBIO
+ALBU001|Albuterol|Inhaler|100mcg/dose|200|45.60|RESPIRA
+ALBU002|Albuterol|Syrup|2mg/5ml|100|28.40|RESPIRA
+ALBU003|Albuterol|Nebulizer Solution|2.5mg/2.5ml|30|56.80|RESPIRA
+OMEP001|Omeprazole|Capsule|20mg|30|38.20|GASTRO
+OMEP002|Omeprazole|Capsule|40mg|30|52.40|GASTRO
+LOSC001|Losartan|Tablet|25mg|30|32.80|CARDIO
+LOSC002|Losartan|Tablet|50mg|30|42.60|CARDIO
+LOSC003|Losartan|Tablet|100mg|30|58.90|CARDIO
+ATOR001|Atorvastatin|Tablet|10mg|30|48.70|CARDIO
+ATOR002|Atorvastatin|Tablet|20mg|30|62.50|CARDIO
+ATOR003|Atorvastatin|Tablet|40mg|30|78.40|CARDIO
+ATOR004|Atorvastatin|Tablet|80mg|30|98.20|CARDIO
+METF001|Metformin|Tablet|500mg|60|18.40|DIABE
+METF002|Metformin|Tablet|850mg|60|24.80|DIABE
+METF003|Metformin|Tablet|1000mg|60|32.50|DIABE
+INSU001|Insulin Regular|Injection|100 IU/ml|10|65.80|DIABE
+INSU002|Insulin NPH|Injection|100 IU/ml|10|68.40|DIABE
+INSU003|Insulin 70/30|Injection|100 IU/ml|10|72.60|DIABE
+DIAZ001|Diazepam|Tablet|2mg|30|14.20|NEURO
+DIAZ002|Diazepam|Tablet|5mg|30|18.60|NEURO
+DIAZ003|Diazepam|Tablet|10mg|30|24.80|NEURO
+DIAZ004|Diazepam|Injection|10mg/2ml|10|35.40|NEURO
+LEVE001|Levetiracetam|Tablet|250mg|60|86.40|NEURO
+LEVE002|Levetiracetam|Tablet|500mg|60|124.80|NEURO
+LEVE003|Levetiracetam|Tablet|1000mg|60|168.50|NEURO
+LEVE004|Levetiracetam|Injection|500mg/5ml|10|210.40|NEURO

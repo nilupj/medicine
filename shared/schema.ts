@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -16,6 +16,13 @@ export const medicines = pgTable("medicines", {
   forms: text("forms"),
   warnings: text("warnings"),
   otcRx: text("otc_rx"),
+  // New fields from drug list
+  drugCode: text("drug_code"),
+  formulation: text("formulation"),
+  strength: text("strength"),
+  countNumber: integer("count_number"),
+  l1Rate: numeric("l1_rate", { precision: 10, scale: 2 }),
+  l1Lab: text("l1_lab"),
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 

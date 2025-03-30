@@ -26,6 +26,7 @@ export interface IStorage {
   getMedicines(limit?: number, offset?: number): Promise<Medicine[]>;
   getMedicineById(id: number): Promise<Medicine | undefined>;
   getMedicineByName(name: string): Promise<Medicine | undefined>;
+  getMedicineByDrugCode(drugCode: string): Promise<Medicine | undefined>;
   searchMedicines(query: string, limit?: number): Promise<Medicine[]>;
   createMedicine(medicine: InsertMedicine): Promise<Medicine>;
 
@@ -112,6 +113,12 @@ export class MemStorage implements IStorage {
       medicine => medicine.name.toLowerCase() === name
     );
   }
+  
+  async getMedicineByDrugCode(drugCode: string): Promise<Medicine | undefined> {
+    return Array.from(this.medicines.values()).find(
+      medicine => medicine.drugCode === drugCode
+    );
+  }
 
   async searchMedicines(query: string, limit: number = 10): Promise<Medicine[]> {
     query = query.toLowerCase();
@@ -142,6 +149,13 @@ export class MemStorage implements IStorage {
       forms: insertMedicine.forms ?? null,
       warnings: insertMedicine.warnings ?? null,
       otcRx: insertMedicine.otcRx ?? null,
+      // Drug list fields
+      drugCode: insertMedicine.drugCode ?? null,
+      formulation: insertMedicine.formulation ?? null,
+      strength: insertMedicine.strength ?? null,
+      countNumber: insertMedicine.countNumber ?? null,
+      l1Rate: insertMedicine.l1Rate ?? null,
+      l1Lab: insertMedicine.l1Lab ?? null,
       lastUpdated: now
     };
     this.medicines.set(id, medicine);

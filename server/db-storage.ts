@@ -33,6 +33,12 @@ export class PostgresStorage implements IStorage {
     return results[0];
   }
 
+  async getMedicineByDrugCode(drugCode: string): Promise<Medicine | undefined> {
+    const results = await db.select().from(medicines)
+      .where(eq(medicines.drugCode, drugCode));
+    return results[0];
+  }
+
   async searchMedicines(query: string, limit: number = 10): Promise<Medicine[]> {
     const lowerQuery = query.toLowerCase();
     return db.select().from(medicines)
