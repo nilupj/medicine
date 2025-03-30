@@ -152,9 +152,9 @@ export async function initDatabase() {
           CREATE TABLE IF NOT EXISTS schedule_frequency (
             id SERIAL PRIMARY KEY,
             schedule_id INTEGER NOT NULL REFERENCES medication_schedules(id),
-            type TEXT NOT NULL CHECK (type IN ('daily', 'weekly', 'monthly', 'specific_days')),
+            frequency_type TEXT NOT NULL CHECK (frequency_type IN ('daily', 'weekly', 'monthly', 'as_needed')),
             days_of_week TEXT,
-            days_of_month TEXT,
+            day_of_month INTEGER,
             interval INTEGER DEFAULT 1,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           )
