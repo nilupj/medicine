@@ -3,6 +3,11 @@ import {
   categories, 
   recentSearches,
   drugInteractions,
+  users,
+  medicationSchedules,
+  scheduleFrequency,
+  reminderTimes,
+  medicationLogs,
   type Medicine, 
   type InsertMedicine,
   type Category,
@@ -10,7 +15,18 @@ import {
   type RecentSearch,
   type InsertRecentSearch,
   type DrugInteraction,
-  type InsertDrugInteraction
+  type InsertDrugInteraction,
+  type User,
+  type InsertUser,
+  type CreateUserInput,
+  type MedicationSchedule,
+  type InsertMedicationSchedule,
+  type ScheduleFrequency,
+  type InsertScheduleFrequency,
+  type ReminderTime,
+  type InsertReminderTime,
+  type MedicationLog,
+  type InsertMedicationLog
 } from "@shared/schema";
 import { medicineData } from "./data/medicines";
 import { PostgresStorage } from "./db-storage";
@@ -45,6 +61,38 @@ export interface IStorage {
   addInteraction(interaction: InsertDrugInteraction): Promise<DrugInteraction>;
   updateInteraction(id: number, interaction: Partial<InsertDrugInteraction>): Promise<DrugInteraction | undefined>;
   deleteInteraction(id: number): Promise<boolean>;
+  
+  // User operations
+  createUser(userInput: CreateUserInput): Promise<User>;
+  getUserById(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined>;
+  
+  // Medication schedule operations
+  createMedicationSchedule(scheduleData: InsertMedicationSchedule): Promise<MedicationSchedule>;
+  getMedicationScheduleById(id: number): Promise<MedicationSchedule | undefined>;
+  getMedicationSchedulesForUser(userId: number): Promise<MedicationSchedule[]>;
+  getMedicationSchedulesForMedicine(medicineId: number): Promise<MedicationSchedule[]>;
+  updateMedicationSchedule(id: number, scheduleData: Partial<InsertMedicationSchedule>): Promise<MedicationSchedule | undefined>;
+  deleteMedicationSchedule(id: number): Promise<boolean>;
+  
+  // Schedule frequency operations
+  createScheduleFrequency(frequencyData: InsertScheduleFrequency): Promise<ScheduleFrequency>;
+  getScheduleFrequencyForSchedule(scheduleId: number): Promise<ScheduleFrequency | undefined>;
+  updateScheduleFrequency(id: number, frequencyData: Partial<InsertScheduleFrequency>): Promise<ScheduleFrequency | undefined>;
+  
+  // Reminder time operations
+  createReminderTime(reminderData: InsertReminderTime): Promise<ReminderTime>;
+  getReminderTimesForSchedule(scheduleId: number): Promise<ReminderTime[]>;
+  updateReminderTime(id: number, reminderData: Partial<InsertReminderTime>): Promise<ReminderTime | undefined>;
+  deleteReminderTime(id: number): Promise<boolean>;
+  
+  // Medication log operations
+  createMedicationLog(logData: InsertMedicationLog): Promise<MedicationLog>;
+  getMedicationLogsForSchedule(scheduleId: number, limit?: number): Promise<MedicationLog[]>;
+  getMedicationLogsForUser(userId: number, limit?: number): Promise<MedicationLog[]>;
+  updateMedicationLog(id: number, logData: Partial<InsertMedicationLog>): Promise<MedicationLog | undefined>;
+  deleteMedicationLog(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -227,6 +275,99 @@ export class MemStorage implements IStorage {
 
   async deleteInteraction(id: number): Promise<boolean> {
     throw new Error("Drug interactions not implemented in in-memory storage");
+  }
+  
+  // User methods (stub implementations)
+  async createUser(userInput: CreateUserInput): Promise<User> {
+    throw new Error("User management not implemented in in-memory storage");
+  }
+  
+  async getUserById(id: number): Promise<User | undefined> {
+    throw new Error("User management not implemented in in-memory storage");
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    throw new Error("User management not implemented in in-memory storage");
+  }
+  
+  async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
+    throw new Error("User management not implemented in in-memory storage");
+  }
+  
+  // Medication schedule methods (stub implementations)
+  async createMedicationSchedule(scheduleData: InsertMedicationSchedule): Promise<MedicationSchedule> {
+    throw new Error("Medication scheduling not implemented in in-memory storage");
+  }
+  
+  async getMedicationScheduleById(id: number): Promise<MedicationSchedule | undefined> {
+    throw new Error("Medication scheduling not implemented in in-memory storage");
+  }
+  
+  async getMedicationSchedulesForUser(userId: number): Promise<MedicationSchedule[]> {
+    throw new Error("Medication scheduling not implemented in in-memory storage");
+  }
+  
+  async getMedicationSchedulesForMedicine(medicineId: number): Promise<MedicationSchedule[]> {
+    throw new Error("Medication scheduling not implemented in in-memory storage");
+  }
+  
+  async updateMedicationSchedule(id: number, scheduleData: Partial<InsertMedicationSchedule>): Promise<MedicationSchedule | undefined> {
+    throw new Error("Medication scheduling not implemented in in-memory storage");
+  }
+  
+  async deleteMedicationSchedule(id: number): Promise<boolean> {
+    throw new Error("Medication scheduling not implemented in in-memory storage");
+  }
+  
+  // Schedule frequency methods (stub implementations)
+  async createScheduleFrequency(frequencyData: InsertScheduleFrequency): Promise<ScheduleFrequency> {
+    throw new Error("Schedule frequency not implemented in in-memory storage");
+  }
+  
+  async getScheduleFrequencyForSchedule(scheduleId: number): Promise<ScheduleFrequency | undefined> {
+    throw new Error("Schedule frequency not implemented in in-memory storage");
+  }
+  
+  async updateScheduleFrequency(id: number, frequencyData: Partial<InsertScheduleFrequency>): Promise<ScheduleFrequency | undefined> {
+    throw new Error("Schedule frequency not implemented in in-memory storage");
+  }
+  
+  // Reminder time methods (stub implementations)
+  async createReminderTime(reminderData: InsertReminderTime): Promise<ReminderTime> {
+    throw new Error("Reminder times not implemented in in-memory storage");
+  }
+  
+  async getReminderTimesForSchedule(scheduleId: number): Promise<ReminderTime[]> {
+    throw new Error("Reminder times not implemented in in-memory storage");
+  }
+  
+  async updateReminderTime(id: number, reminderData: Partial<InsertReminderTime>): Promise<ReminderTime | undefined> {
+    throw new Error("Reminder times not implemented in in-memory storage");
+  }
+  
+  async deleteReminderTime(id: number): Promise<boolean> {
+    throw new Error("Reminder times not implemented in in-memory storage");
+  }
+  
+  // Medication log methods (stub implementations)
+  async createMedicationLog(logData: InsertMedicationLog): Promise<MedicationLog> {
+    throw new Error("Medication logs not implemented in in-memory storage");
+  }
+  
+  async getMedicationLogsForSchedule(scheduleId: number, limit: number = 100): Promise<MedicationLog[]> {
+    throw new Error("Medication logs not implemented in in-memory storage");
+  }
+  
+  async getMedicationLogsForUser(userId: number, limit: number = 30): Promise<MedicationLog[]> {
+    throw new Error("Medication logs not implemented in in-memory storage");
+  }
+  
+  async updateMedicationLog(id: number, logData: Partial<InsertMedicationLog>): Promise<MedicationLog | undefined> {
+    throw new Error("Medication logs not implemented in in-memory storage");
+  }
+  
+  async deleteMedicationLog(id: number): Promise<boolean> {
+    throw new Error("Medication logs not implemented in in-memory storage");
   }
 }
 

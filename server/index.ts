@@ -2,10 +2,36 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initDatabase } from "./database";
+import session from 'express-session';
+import MemoryStore from 'memorystore';
+
+// Create a memory store for sessions
+const MemoryStoreSession = MemoryStore(session);
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Set up session middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'medicine-app-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  store: new MemoryStoreSession({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+  }
+}));
+
+// For TypeScript - extend the session type
+declare module 'express-session' {
+  interface SessionData {
+    userId: number;
+  }
+}
 
 app.use((req, res, next) => {
   const start = Date.now();
