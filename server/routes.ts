@@ -837,6 +837,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up WebSocket server for real-time drug interaction checking
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   
+  // Handle Next.js pages if requested through our server
+  app.get("/_next/*", (req, res) => {
+    res.redirect(`${req.protocol}://${req.get("host")}${req.originalUrl}`);
+  });
+  
+  // Handle Next.js API routes if requested through our server
+  app.all("/api/next/*", (req, res) => {
+    const nextPath = req.path.replace("/api/next", "/api");
+    res.redirect(`${req.protocol}://${req.get("host")}${nextPath}`);
+  });
+  
   wss.on('connection', (ws) => {
     console.log('Client connected to WebSocket');
     
