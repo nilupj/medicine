@@ -1,34 +1,34 @@
-import { pool, db } from './db';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { migrate } from 'drizzle-orm/neon-serverless/migrator';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
 import * as schema from '@shared/schema';
-import { medicines, categories, users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
 
-/**
- * Initialize the database by creating tables and adding initial data
- */
-export async function initDatabase() {
-  try {
-    console.log('Initializing database...');
-    
-    // Run the schema creation
-    await createSchema();
-    
-    // Seed database with admin user if it doesn't exist
-    await seedDatabase();
-    
-    console.log('Database initialization complete!');
-  } catch (error) {
-    console.error('Error initializing database:', error);
-    throw error;
+dotenv.config();
+neonConfig.webSocketConstructor = ws;
+
+async function main() {
+  console.log('Starting database schema push...');
+
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL environment variable is not set.');
+    process.exit(1);
   }
-}
 
-/**
- * Create database schema
- */
-async function createSchema() {
+  // Create a connection pool
+  const pool = new Pool({ 
+    connectionString: process.env.DATABASE_URL
+  });
+
   try {
+    // Create database connection
+    const db = drizzle(pool, { schema });
+
+    console.log('Connected to database, pushing schema...');
+
+    // Instead of using drizzle-kit, we'll manually create tables
+    // This approach uses direct SQL which is more compatible with various PostgreSQL versions
     await pool.query(`
       -- Categories table
       CREATE TABLE IF NOT EXISTS categories (
@@ -139,70 +139,19 @@ async function createSchema() {
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    
-    console.log('Database schema created successfully');
+
+    console.log('Schema push completed successfully!');
+    process.exit(0);
   } catch (error) {
-    console.error('Error creating schema:', error);
-    throw error;
+    console.error('Error pushing schema:', error);
+    process.exit(1);
+  } finally {
+    // Close the connection pool
+    await pool.end();
   }
 }
 
-/**
- * Seed the database with initial data
- */
-async function seedDatabase() {
-  try {
-    // Add admin user if it doesn't exist
-    const existingAdmin = await db.select()
-      .from(users)
-      .where(eq(users.username, 'admin'))
-      .limit(1);
-      
-    if (existingAdmin.length === 0) {
-      const passwordHash = await bcrypt.hash('admin123', 10);
-      
-      await db.insert(users).values({
-        username: 'admin',
-        email: 'admin@example.com',
-        passwordHash: passwordHash,
-        role: 'admin'
-      });
-      
-      console.log('Admin user created');
-    }
-    
-    // Add basic categories if they don't exist
-    const categories = [
-      'Antibiotics', 
-      'Pain Relief', 
-      'Cardiovascular',
-      'Respiratory',
-      'Diabetes',
-      'Allergy',
-      'Mental Health',
-      'Hormone',
-      'Gastrointestinal',
-      'Other'
-    ];
-    
-    for (const category of categories) {
-      try {
-        await db.insert(schema.categories).values({
-          name: category,
-          description: `${category} medications`
-        });
-        console.log(`Added category: ${category}`);
-      } catch (error: any) {
-        // Ignore duplicate key errors
-        if (error && error.message && !error.message.includes('duplicate key')) {
-          console.error(`Error adding category ${category}:`, error);
-        }
-      }
-    }
-    
-    console.log('Database seeding complete');
-  } catch (error) {
-    console.error('Error seeding database:', error);
-    throw error;
-  }
-}
+main().catch((err) => {
+  console.error('Unhandled error:', err);
+  process.exit(1);
+});

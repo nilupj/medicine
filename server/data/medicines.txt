@@ -1,12 +1,4 @@
 DrugCode|Name|Formulation|Strength|Count|L1Rate|L1Lab
-MED1000|Generic Drugs A-Z|Tablet|100mg|90|548.95|MED1000
-MED1001|Vitamins & Supplements|Tablet|100mg|30|723.82|MED1001
-MED1002|Drug Interaction Checker|Tablet|100mg|50|702.40|MED1002
-MED1003|Pill Identifier|Tablet|100mg|40|104.70|MED1003
-MED1004|Medical Dictionary|Tablet|100mg|89|947.88|MED1004
-MED1005|Slideshows|Tablet|100mg|13|299.44|MED1005
-MED1006|Images|Tablet|100mg|43|101.55|MED1006
-MED1007|Quizzes|Tablet|100mg|37|924.81|MED1007
 MED1008|A-Methapred|Tablet|100mg|59|297.28|MED1008
 MED1009|Abacavir and Lamivudine Film-coated Tablets|Tablet|100mg|75|985.77|MED1009
 MED1010|Abacavir Sulfate|Tablet|100mg|67|764.94|MED1010
@@ -210,7 +202,6 @@ MED1207|Afluria Quadrivalent 2020|Injection|100mg|22|285.99|MED1207
 MED1208|Afrezza|Powder|100mg|36|432.57|MED1208
 MED1209|Afstyla|Injection|100mg|79|576.11|MED1209
 MED1210|Aftera|Tablet|100mg|73|758.80|MED1210
-MED1211|AfterPill|Tablet|1.5 mg|15|844.84|MED1211
 MED1212|Agalsidase Beta|Tablet|100mg|76|702.12|MED1212
 MED1213|Agamree|Suspension|100mg|43|245.66|MED1213
 MED1214|Agenerase Capsules|Capsule|100mg|64|996.03|MED1214
@@ -856,8 +847,5 @@ MED1853|Aztreonam Injection|Injection|100mg|10|978.21|MED1853
 MED1854|Azulfidine EN-Tabs|Tablet|100mg|86|930.21|MED1854
 MED1855|Azulfidine EN-tabs|Tablet|100mg|64|881.85|MED1855
 MED1856|Azurette|Tablet|100mg|60|235.66|MED1856
-MED1857|Pill Identification Tool|Tablet|100mg|63|509.10|MED1857
-MED1858|Vitamins, Herbs, & Dietary Supplements|Tablet|100mg|66|437.25|MED1858
 MED1859|Dictionary|Tablet|100mg|68|773.06|MED1859
-MED1860|Consumer Contact RxList|Tablet|100mg|58|953.29|MED1860
 MED1861|Sponsor Policy|Tablet|100mg|22|668.77|MED1861

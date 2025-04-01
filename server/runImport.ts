@@ -1,15 +1,22 @@
 import { importDrugsFromList } from './importDrugs';
+import { initDatabase } from './database';
 import path from 'path';
 
-const dataFilePath = path.join(__dirname, 'data', 'druglist.txt');
-
-console.log('Starting drug import script...');
-importDrugsFromList(dataFilePath)
-  .then(() => {
-    console.log('Drug import completed successfully');
+async function main() {
+  try {
+    console.log('Initializing database...');
+    await initDatabase();
+    
+    console.log('Starting medicine import...');
+    const medicinesFilePath = path.join(process.cwd(), 'server/data/medicines.txt');
+    await importDrugsFromList(medicinesFilePath);
+    
+    console.log('All done! Medicines have been imported to the database.');
     process.exit(0);
-  })
-  .catch((error) => {
-    console.error('Error in drug import process:', error);
+  } catch (error) {
+    console.error('Import failed:', error);
     process.exit(1);
-  });
+  }
+}
+
+main().catch(console.error);

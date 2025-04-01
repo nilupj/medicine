@@ -1,7 +1,9 @@
 import * as fs from 'fs';
+import * as path from 'path';
 import * as readline from 'readline';
-import { storage } from './storage';
-import { InsertMedicine } from '@shared/schema';
+import { db } from './db';
+import { medicines, categories, type InsertMedicine, type InsertCategory } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 interface DrugData {
   drugCode: string;
@@ -17,50 +19,39 @@ interface DrugData {
  * Parse the drug list file and extract drug data
  */
 async function parseDrugListFile(filePath: string): Promise<DrugData[]> {
-  const drugList: DrugData[] = [];
-
-  // Create read interface for file
+  const drugs: DrugData[] = [];
   const fileStream = fs.createReadStream(filePath);
+  
   const rl = readline.createInterface({
     input: fileStream,
-    crlfDelay: Infinity,
+    crlfDelay: Infinity
   });
-
-  let isFirstLine = true;
   
-  // Process each line
+  let lineCount = 0;
+  
   for await (const line of rl) {
-    // Skip header line
-    if (isFirstLine) {
-      isFirstLine = false;
-      continue;
-    }
-
-    // Parse pipe-delimited data
+    lineCount++;
+    
+    // Skip the header line
+    if (lineCount === 1) continue;
+    
     const parts = line.split('|');
-    if (parts.length < 7) {
-      console.warn(`Invalid line format, skipping: ${line}`);
-      continue;
-    }
-
-    try {
+    if (parts.length >= 7) {
       const drugData: DrugData = {
-        drugCode: parts[0].trim(),
-        name: parts[1].trim(),
-        formulation: parts[2].trim(),
-        strength: parts[3].trim(),
-        countNumber: parseInt(parts[4].trim(), 10),
-        l1Rate: parseFloat(parts[5].trim()),
-        l1Lab: parts[6].trim(),
+        drugCode: parts[0],
+        name: parts[1],
+        formulation: parts[2],
+        strength: parts[3],
+        countNumber: parseInt(parts[4], 10) || 0,
+        l1Rate: parseFloat(parts[5]) || 0,
+        l1Lab: parts[6]
       };
-
-      drugList.push(drugData);
-    } catch (error) {
-      console.error(`Error parsing line: ${line}`, error);
+      
+      drugs.push(drugData);
     }
   }
-
-  return drugList;
+  
+  return drugs;
 }
 
 /**
@@ -68,65 +59,90 @@ async function parseDrugListFile(filePath: string): Promise<DrugData[]> {
  */
 export async function importDrugsFromList(filePath: string): Promise<void> {
   try {
-    console.log(`Starting import from file: ${filePath}`);
+    console.log(`Starting import from ${filePath}...`);
     
-    // Parse the drug list file
-    const drugList = await parseDrugListFile(filePath);
-    console.log(`Found ${drugList.length} drugs to import`);
+    const drugs = await parseDrugListFile(filePath);
+    console.log(`Parsed ${drugs.length} drugs from file.`);
     
-    // Process and import each drug
-    let successCount = 0;
-    let errorCount = 0;
+    // Track categories we've already added
+    const addedCategories = new Set<string>();
     
-    for (const drug of drugList) {
+    // Process each drug
+    for (const drug of drugs) {
       try {
-        // Check if medicine with this drug code already exists
-        const existingMedicine = await storage.getMedicineByDrugCode(drug.drugCode);
-        
-        if (existingMedicine) {
-          console.log(`Updating existing drug: ${drug.name} (${drug.drugCode})`);
+        // Check if this medicine already exists
+        const existingMedicine = await db.select()
+          .from(medicines)
+          .where(eq(medicines.drugCode, drug.drugCode))
+          .limit(1);
           
-          // Update the existing medicine record
-          // This would require adding an updateMedicine method to the storage interface
-        } else {
-          console.log(`Adding new drug: ${drug.name} (${drug.drugCode})`);
-          
-          // Prepare data for insertion
-          const medicineData: InsertMedicine = {
-            name: drug.name,
-            description: `${drug.name} ${drug.formulation} ${drug.strength}`,
-            category: determineCategoryFromDrugName(drug.name),
-            forms: drug.formulation,
-            drugCode: drug.drugCode,
-            formulation: drug.formulation,
-            strength: drug.strength,
-            countNumber: drug.countNumber,
-            l1Rate: drug.l1Rate.toString(),
-            l1Lab: drug.l1Lab,
-            // These fields are required but might not be in the import file
-            // Use sensible defaults or inferred values
-            aliases: null,
-            composition: null,
-            uses: `${drug.name} is used for medical conditions requiring ${determineCategoryFromDrugName(drug.name)} treatment.`,
-            sideEffects: null,
-            dosage: `${drug.strength} as directed by healthcare provider.`,
-            warnings: null,
-            otcRx: 'Rx' // Assume all imported drugs are prescription
-          };
-          
-          // Insert the new medicine
-          await storage.createMedicine(medicineData);
-          successCount++;
+        if (existingMedicine.length > 0) {
+          console.log(`Medicine ${drug.drugCode} already exists. Skipping.`);
+          continue;
         }
+        
+        // Determine category for this drug
+        const category = determineCategoryFromDrugName(drug.name);
+        
+        // Add category if it doesn't exist yet
+        if (!addedCategories.has(category)) {
+          try {
+            // Check if category already exists
+            const existingCategory = await db.select()
+              .from(categories)
+              .where(eq(categories.name, category))
+              .limit(1);
+              
+            if (existingCategory.length === 0) {
+              await db.insert(categories).values({
+                name: category,
+                description: `${category} medications`
+              });
+              console.log(`Added category: ${category}`);
+            }
+            
+            addedCategories.add(category);
+          } catch (error) {
+            console.error(`Error adding category ${category}:`, error);
+          }
+        }
+        
+        // Get category ID
+        const [categoryRecord] = await db.select()
+          .from(categories)
+          .where(eq(categories.name, category))
+          .limit(1);
+        
+        if (!categoryRecord) {
+          console.error(`Could not find category ${category} for drug ${drug.name}`);
+          continue;
+        }
+        
+        // Add the medicine
+        const medicineData: InsertMedicine = {
+          drugCode: drug.drugCode,
+          name: drug.name,
+          formulation: drug.formulation,
+          strength: drug.strength,
+          description: `${drug.name} ${drug.formulation} ${drug.strength}`,
+          category: categoryRecord.name,
+          composition: null,
+          sideEffects: null,
+          countNumber: drug.countNumber.toString(),
+          l1Rate: drug.l1Rate.toString(),
+          l1Lab: drug.l1Lab
+        };
+        
+        await db.insert(medicines).values(medicineData);
+        console.log(`Added medicine: ${drug.name}`);
       } catch (error) {
-        console.error(`Error importing drug ${drug.drugCode}:`, error);
-        errorCount++;
+        console.error(`Error processing drug ${drug.drugCode} - ${drug.name}:`, error);
       }
     }
     
-    console.log(`Import completed. Added ${successCount} new drugs. Errors: ${errorCount}`);
+    console.log('Import complete!');
   } catch (error) {
-    console.error('Error during drug import process:', error);
+    console.error('Failed to import drugs:', error);
     throw error;
   }
 }
@@ -136,26 +152,53 @@ export async function importDrugsFromList(filePath: string): Promise<void> {
  * This is a simple implementation - in a real system, we'd have more sophisticated categorization
  */
 function determineCategoryFromDrugName(name: string): string {
+  // Check for specific medication categories
   const nameLower = name.toLowerCase();
   
-  if (nameLower.includes('paracetamol') || nameLower.includes('acetaminophen')) {
-    return 'Pain Relief';
-  } else if (nameLower.includes('ibuprofen') || nameLower.includes('naproxen')) {
-    return 'NSAIDS';
-  } else if (nameLower.includes('amoxicillin') || nameLower.includes('ciprofloxacin') || 
-             nameLower.includes('metronidazole')) {
-    return 'Antibacterials';
-  } else if (nameLower.includes('albuterol') || nameLower.includes('salbutamol')) {
-    return 'Respiratory';
-  } else if (nameLower.includes('omeprazole')) {
-    return 'Gastrointestinal';
-  } else if (nameLower.includes('losartan') || nameLower.includes('atorvastatin')) {
-    return 'Cardiovascular';
-  } else if (nameLower.includes('metformin') || nameLower.includes('insulin')) {
+  if (nameLower.includes('insulin') || nameLower.includes('metformin') || nameLower.includes('glipizide') || nameLower.includes('glyburide')) {
     return 'Diabetes';
-  } else if (nameLower.includes('diazepam') || nameLower.includes('levetiracetam')) {
-    return 'Neurological';
   }
   
+  if (nameLower.includes('lisinopril') || nameLower.includes('amlodipine') || nameLower.includes('losartan') || 
+      nameLower.includes('metoprolol') || nameLower.includes('atenolol') || nameLower.includes('valsartan')) {
+    return 'Cardiovascular';
+  }
+  
+  if (nameLower.includes('albuterol') || nameLower.includes('fluticasone') || nameLower.includes('montelukast') || 
+      nameLower.includes('budesonide') || nameLower.includes('salbutamol')) {
+    return 'Respiratory';
+  }
+  
+  if (nameLower.includes('omeprazole') || nameLower.includes('pantoprazole') || nameLower.includes('ranitidine') || 
+      nameLower.includes('famotidine') || nameLower.includes('esomeprazole')) {
+    return 'Gastrointestinal';
+  }
+  
+  if (nameLower.includes('amoxicillin') || nameLower.includes('azithromycin') || nameLower.includes('ciprofloxacin') || 
+      nameLower.includes('doxycycline') || nameLower.includes('penicillin') || nameLower.includes('cephalexin')) {
+    return 'Antibiotics';
+  }
+  
+  if (nameLower.includes('ibuprofen') || nameLower.includes('acetaminophen') || nameLower.includes('naproxen') || 
+      nameLower.includes('aspirin') || nameLower.includes('celecoxib')) {
+    return 'Pain Relief';
+  }
+  
+  if (nameLower.includes('loratadine') || nameLower.includes('cetirizine') || nameLower.includes('fexofenadine') || 
+      nameLower.includes('diphenhydramine') || nameLower.includes('allegra')) {
+    return 'Allergy';
+  }
+  
+  if (nameLower.includes('fluoxetine') || nameLower.includes('sertraline') || nameLower.includes('escitalopram') || 
+      nameLower.includes('citalopram') || nameLower.includes('paroxetine') || nameLower.includes('zoloft')) {
+    return 'Mental Health';
+  }
+  
+  if (nameLower.includes('estradiol') || nameLower.includes('levonorgestrel') || nameLower.includes('norethindrone') || 
+      nameLower.includes('progesterone')) {
+    return 'Hormone';
+  }
+  
+  // Default category if no matches found
   return 'Other';
 }
