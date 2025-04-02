@@ -1,4 +1,4 @@
-import { db } from './database';
+import { db } from './db';
 import { eq, like, desc, sql, and, or, inArray } from 'drizzle-orm';
 import { 
   medicines, 
